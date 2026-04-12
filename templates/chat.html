@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}消息 - 轻视频{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- 对话列表 -->
+    <div class="conversations-list">
+        <h3>最近对话</h3>
+        {% if conversations %}
+            {% for conv in conversations %}
+            <div class="conversation-item {% if friend and friend.id == conv.user.id %}active{% endif %}" 
+                 onclick="openChat({{ conv.user.id }})">
+                <img src="{{ url_for('uploaded_avatar', filename=conv.user.avatar) }}" 
+                     alt="{{ conv.user.username }}" class="conversation-avatar">
+                <div class="conversation-info">
+                    <div class="conversation-name">{{ conv.user.username }}</div>
+                    <div class="conversation-last-message">
+                        {% if conv.last_message %}
+                            {% if conv.last_message.message_type == 'video_share' %}
+                                <i class="fas fa-video"></i> 分享了视频
+                            {% else %}
+                                {{ conv.last_message.content[:30] }}{% if conv.last_message.content|length > 30 %}...{% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% if conv.last_message %}
+                <div class="conversation-time">
+                    {{ conv.last_message.created_at.strftime('%H:%M') }}
+                </div>
+                {% endif %}
+                {% if conv.unread_count > 0 %}
+                <span class="unread-badge">{{ conv.unread_count }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="text-align: center; padding: 20px; color: #999;">
+                暂无对话，去添加好友吧
+            </p>
+        {% endif %}
+    </div>
+    
+    <!-- 聊天区域 -->
+    <div class="chat-area">
+        {% if friend %}
+        <div class="chat-header">
+            <img src="{{ url_for('uploaded_avatar', filename=friend.avatar) }}" 
+                 alt="{{ friend.username }}" class="chat-header-avatar">
+            <div class="chat-header-info">
+                <h3>{{ friend.username }}</h3>
+                <p>在线</p>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            {% for message in messages %}
+            <div class="message-item {% if message.sender_id == current_user.id %}sent{% endif %}">
+                <img src="{{ url_for('uploaded_avatar', filename=message.sender.avatar) }}" 
+                     class="message-avatar">
+                <div class="message-content">
+                    {% if message.message_type == 'video_share' and message.video %}
+                        <div class="message-text">{{ message.content }}</div>
+                        <div class="shared-video-card" onclick="window.location.href='/video/{{ message.video.id }}'">
+                            <div class="shared-video-title">{{ message.video.title }}</div>
+                            <div class="shared-video-meta">
+                                <i class="fas fa-eye"></i> {{ message.video.views }} 
+                                <i class="fas fa-heart"></i> {{ message.video.like_count }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="message-text">{{ message.content }}</div>
+                    {% endif %}
+                    <div class="message-time">{{ message.created_at.strftime('%H:%M') }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="chat-input-area">
+            <input type="hidden" id="chat-receiver-id" value="{{ friend.id }}">
+            <textarea id="message-input" class="chat-input" 
+                      placeholder="输入消息..." 
+                      onkeypress="handleMessageKeyPress(event)"
+                      rows="1"></textarea>
+            <button class="chat-send-btn" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        {% else %}
+        <div class="chat-placeholder">
+            <i class="fas fa-comment-dots" style="font-size: 64px; color: #ddd; margin-bottom: 20px;"></i>
+            <h3>选择好友开始聊天</h3>
+            <p style="color: #999;">从左侧选择一位好友，开始你们的对话</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.chat-placeholder {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+</style>
+{% endblock %}

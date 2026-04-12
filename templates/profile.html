@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}个人中心 - 轻视频{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+    <div class="avatar-upload-container">
+        <img src="{{ url_for('uploaded_avatar', filename=current_user.avatar) }}" 
+             alt="{{ current_user.username }}" class="current-avatar" id="avatar-preview">
+        
+        <form action="{{ url_for('update_avatar') }}" method="post" enctype="multipart/form-data" class="avatar-upload-form">
+            <div class="avatar-upload-btn btn">
+                <i class="fas fa-camera"></i> 更换头像
+                <input type="file" name="avatar" accept="image/*" onchange="previewAvatar(this); this.form.submit()">
+            </div>
+        </form>
+    </div>
+    
+    <h2>{{ current_user.username }}</h2>
+    
+    <form action="{{ url_for('update_bio') }}" method="post" class="bio-form">
+        <textarea name="bio" placeholder="写点什么介绍一下自己吧..." maxlength="500">{{ current_user.bio }}</textarea>
+        <button type="submit" class="btn">更新简介</button>
+    </form>
+    
+    <div class="profile-stats">
+        <div class="stat-item">
+            <span class="stat-value">{{ user_videos|length }}</span>
+            <span class="stat-label">投稿</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ friends|length }}</span>
+            <span class="stat-label">好友</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ favorite_videos|length }}</span>
+            <span class="stat-label">收藏</span>
+        </div>
+    </div>
+</div>
+
+<div class="profile-tabs">
+    <button class="tab-btn active" onclick="switchTab('uploads')">我的投稿</button>
+    <button class="tab-btn" onclick="switchTab('favorites')">我的收藏</button>
+    <button class="tab-btn" onclick="switchTab('friends')">我的好友</button>
+</div>
+
+<!-- 我的投稿 - 带垃圾桶图标 -->
+<div id="tab-uploads" class="tab-panel active">
+    <h3>我的投稿 ({{ user_videos|length }})</h3>
+    {% if user_videos %}
+    <div class="video-grid">
+        {% for video in user_videos %}
+        <div class="video-card" data-video-id="{{ video.id }}">
+            <div class="video-cover">
+                <img src="{{ url_for('uploaded_cover', filename=video.cover_image) }}" alt="{{ video.title }}">
+                <!-- 垃圾桶图标 - 只有自己的视频显示 -->
+                {% if video.user_id == current_user.id %}
+                <button class="delete-video-btn" onclick="deleteVideo({{ video.id }}, '{{ video.title }}')" title="删除视频">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                {% endif %}
+            </div>
+            <div class="video-info">
+                <h3 class="video-title">{{ video.title }}</h3>
+                <div class="video-meta">
+                    <span><i class="fas fa-eye"></i> {{ video.views }}</span>
+                    <span><i class="fas fa-heart"></i> {{ video.like_count }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="text-align: center; padding: 50px;">
+        还没有投稿视频，<a href="{{ url_for('upload') }}">立即投稿</a>
+    </p>
+    {% endif %}
+</div>
+
+<!-- 我的收藏 -->
+<div id="tab-favorites" class="tab-panel">
+    <h3>我的收藏 ({{ favorite_videos|length }})</h3>
+    {% if favorite_videos %}
+    <div class="video-grid">
+        {% for video in favorite_videos %}
+        <div class="video-card" data-video-id="{{ video.id }}">
+            <div class="video-cover">
+                <img src="{{ url_for('uploaded_cover', filename=video.cover_image) }}" alt="{{ video.title }}">
+            </div>
+            <div class="video-info">
+                <h3 class="video-title">{{ video.title }}</h3>
+                <div class="video-meta">
+                    <span><i class="fas fa-eye"></i> {{ video.views }}</span>
+                    <span><i class="fas fa-heart"></i> {{ video.like_count }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="text-align: center; padding: 50px;">
+        还没有收藏视频，去首页看看吧
+    </p>
+    {% endif %}
+</div>
+
+<!-- 我的好友 -->
+<div id="tab-friends" class="tab-panel">
+    <h3>我的好友 ({{ friends|length }})</h3>
+    {% if friends %}
+    <div class="friends-list" style="background: transparent; padding: 0;">
+        {% for friend in friends %}
+        <div class="friend-item">
+            <img src="{{ url_for('uploaded_avatar', filename=friend.avatar) }}" 
+                 alt="{{ friend.username }}" class="friend-avatar">
+            <div class="friend-info">
+                <div class="friend-name">{{ friend.username }}</div>
+                <div class="friend-status">在线</div>
+            </div>
+            <div class="friend-actions">
+                <button class="friend-action-btn btn-chat" onclick="openChat({{ friend.id }})">
+                    <i class="fas fa-comment"></i> 聊天
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="text-align: center; padding: 50px;">
+        还没有好友，<a href="{{ url_for('friends_page') }}">去添加好友</a>
+    </p>
+    {% endif %}
+</div>
+
+<!-- 好友请求 -->
+{% if pending_requests %}
+<div class="pending-requests" style="margin-top: 30px;">
+    <h3>好友请求 ({{ pending_requests|length }})</h3>
+    {% for requester in pending_requests %}
+    <div class="friend-item">
+        <img src="{{ url_for('uploaded_avatar', filename=requester.avatar) }}" 
+             alt="{{ requester.username }}" class="friend-avatar">
+        <div class="friend-info">
+            <div class="friend-name">{{ requester.username }}</div>
+            <div class="friend-status">请求添加你为好友</div>
+        </div>
+        <div class="friend-actions">
+            <button class="friend-action-btn btn-accept" onclick="acceptFriendRequest({{ requester.id }})">
+                <i class="fas fa-check"></i> 接受
+            </button>
+            <button class="friend-action-btn btn-reject" onclick="rejectFriendRequest({{ requester.id }})">
+                <i class="fas fa-times"></i> 拒绝
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 删除视频函数 - 使用浏览器原生确认框
+function deleteVideo(videoId, videoTitle) {
+    // 阻止事件冒泡，防止触发视频卡片点击
+    event.stopPropagation();
+    
+    // 弹出浏览器原生确认框
+    if (confirm(`确定要删除视频 "${videoTitle}" 吗？\n删除后无法恢复！`)) {
+        // 用户点击确定，发送删除请求
+        fetch(`/video/${videoId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (response.redirected) {
+                // 如果服务器返回重定向，跳转到目标页面
+                window.location.href = response.url;
+            } else {
+                // 否则刷新当前页面
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('删除失败，请稍后重试');
+        });
+    }
+}
+
+// 确保视频卡片点击跳转不受影响
+document.addEventListener('DOMContentLoaded', function() {
+    // 视频卡片点击跳转
+    document.querySelectorAll('.video-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // 如果点击的是删除按钮，不跳转
+            if (e.target.classList.contains('delete-video-btn') || 
+                e.target.closest('.delete-video-btn')) {
+                return;
+            }
+            const videoId = this.dataset.videoId;
+            if (videoId) {
+                window.location.href = `/video/${videoId}`;
+            }
+        });
+    });
+});
+
+// 标签页切换函数
+function switchTab(tabName) {
+    // 隐藏所有标签页
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+    });
+    
+    // 取消所有标签按钮的激活状态
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // 显示选中的标签页
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    
+    // 激活对应的按钮
+    event.target.classList.add('active');
+}
+</script>
+{% endblock %}
