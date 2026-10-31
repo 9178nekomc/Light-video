@@ -157,9 +157,13 @@ cargo build --release       # LTO + codegen-units=1 + panic=abort
 │           ├── ws.js       # 自动重连的 WS 客户端
 │           └── pages/      # 首页/播放/投稿/主页/好友/私信/通知/登录
 ├── scripts/
-│   ├── ui-smoke.sh         # 造数据 + 无头浏览器截图 + DOM 断言
-│   ├── cdp-shot.mjs        # CDP 受控播放截图
-│   └── cdp-ws-check.mjs    # 登录 → WS 发弹幕 → 落库校验
+│   ├── ui-smoke.sh            # 造数据 + 无头浏览器截图 + DOM 断言
+│   ├── cdp-shot.mjs           # CDP 受控播放截图（等待真实播放进度）
+│   ├── cdp-upload.mjs         # 浏览器内选文件 → 自动截帧 → 分片上传
+│   ├── cdp-nav-check.mjs      # 路由切换：滚动复位 / CLS / 返回恢复
+│   ├── cdp-danmaku-check.mjs  # 弹幕悬停保持、去重、切页后不重复
+│   ├── cdp-pages.mjs          # 登录态页面巡检（5 个页面 + 控制台错误）
+│   └── cdp-ws-check.mjs       # 登录 → WS 发弹幕 → 落库校验
 ├── deploy/                 # Nginx / systemd
 ├── Dockerfile / docker-compose.yml
 └── legacy/                 # 旧 Flask 版本（存档，不再维护）
@@ -411,6 +415,30 @@ node scripts/cdp-ws-check.mjs 9334 "http://127.0.0.1:3000" 7 ws.png
 ```
 
 实测：`login=200`、`connected=true`、弹幕数 `4 → 5`、内容已落库、视频播放到 `3.46s`、零控制台错误。
+
+### 13.5 交互回归（悬停 / 去重 / 切页）
+
+```bash
+node scripts/cdp-danmaku-check.mjs 9345 "http://127.0.0.1:3000" 1 dm.png
+```
+
+实测：
+
+```
+hover(4s)   → hideUi:false, barOpacity:1, input 可见
+发一条      → 服务端 +1，列表 1 行，spawnDelta=1, activeSame=1, itemsSame=1
+快速切页×3  → 再发一条仍 +1
+控制台错误  → 0
+```
+
+### 13.6 路由切换（滚动 / 布局位移）
+
+```bash
+node scripts/cdp-nav-check.mjs 9342 "http://127.0.0.1:3000" nav.png
+```
+
+实测：点击后 `scrollY 210 → 0`（60ms 内），进度条 `route-progress on`，CLS `0.0083`，
+返回后恢复 `210.67`，零 console 错误。
 
 ---
 
