@@ -1,0 +1,49 @@
+services:
+  lightvideo:
+    build:
+      context: .
+      args:
+        # 不需要多分辨率转码时可设为 false，镜像体积减少约 300MB
+        WITH_FFMPEG: "true"
+    image: lightvideo:1.0.0
+    container_name: lightvideo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
+      TRUST_PROXY: "true"
+      SESSION_DAYS: "14"
+      MAX_VIDEO_MB: "4096"
+      CHUNK_SIZE_MB: "4"
+      # 生产环境建议显式提供；留空则由容器自动生成并持久化到 /data/jwt.key
+      JWT_SECRET: ${JWT_SECRET:-}
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+
+  # 可选：TLS 终止 + WebSocket 反代
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: lightvideo-nginx
+    restart: unless-stopped
+    depends_on:
+      - lightvideo
+    ports:
+      - "8080:80"
+    volumes:
+      - ./deploy/nginx.docker.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./data/certs:/etc/nginx/certs:ro
+    profiles: ["tls"]

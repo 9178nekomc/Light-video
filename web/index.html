@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="轻视频 Light-Video — 高性能开源视频社区">
+<title>轻视频 · Light Video</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body>
+<div id="route-progress" class="route-progress" aria-hidden="true"></div>
+<div id="app">
+  <header class="topbar" id="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" data-link>
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M7 5.5c0-1.2 1.3-1.9 2.3-1.3l16 9.4c1 .6 1 2 0 2.6l-16 9.4c-1 .6-2.3-.1-2.3-1.3V5.5z"/></svg>
+        </span>
+        <span class="brand-text">轻视频<em>LIGHT</em></span>
+      </a>
+
+      <form class="search" id="search-form" role="search" autocomplete="off">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+        <input id="search-input" name="q" type="search" placeholder="搜索视频、用户…" aria-label="搜索" maxlength="60">
+        <kbd class="search-kbd">/</kbd>
+        <div class="search-panel" id="search-panel" hidden></div>
+      </form>
+
+      <nav class="top-actions" id="top-actions"></nav>
+    </div>
+  </header>
+
+  <main id="view" class="view"></main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="brand-mark small"><svg viewBox="0 0 32 32"><path d="M7 5.5c0-1.2 1.3-1.9 2.3-1.3l16 9.4c1 .6 1 2 0 2.6l-16 9.4c-1 .6-2.3-.1-2.3-1.3V5.5z"/></svg></span>
+        <span>轻视频 · 用 Rust 重写的视频社区</span>
+      </div>
+      <div class="footer-links">
+        <span id="footer-stats">—</span>
+        <span class="dot">·</span>
+        <a href="/api/health" target="_blank" rel="noopener">服务状态</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="modal-root"></div>
+
+<script type="module" src="/assets/js/app.js"></script>
+</body>
+</html>

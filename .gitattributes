@@ -1,0 +1,8 @@
+# 统一换行，避免 Windows 检出后整库 diff
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.png binary
+*.jpg binary
+*.webm binary
+*.mp4 binary

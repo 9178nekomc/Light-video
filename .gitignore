@@ -208,3 +208,27 @@ __marimo__/
 
 # 第三方二进制，请自行下载
 caddy.exe
+
+# ===== Light-Video (Rust) =====
+server/target/
+server/.env
+server/data/
+server/data-demo/
+server/data-*/
+server/run.log
+server/run.pid
+server/build.log
+.smoke/
+data/
+data-demo/
+legacy/instance/
+legacy/uploads/videos/*
+legacy/uploads/covers/*
+legacy/uploads/avatars/*
+!legacy/uploads/**/.gitkeep
+
+# ===== 工作区/工具产物 =====
+.workbuddy-ai/
+.tmp/
+.seed/
+*.log
